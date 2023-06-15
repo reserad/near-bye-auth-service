@@ -1,10 +1,11 @@
-import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
+import { ApiService } from './api.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([]), HttpModule],
-  providers: [],
-  exports: [TypeOrmModule],
+  imports: [ConfigModule, HttpModule],
+  providers: [ApiService],
+  exports: [ApiService],
 })
 export class ApiModule {}

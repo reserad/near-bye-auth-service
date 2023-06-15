@@ -1,0 +1,20 @@
+version: '3.1'
+
+networks:
+  proxynet:
+    name: near-bye-network
+
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+    command: npm run start:dev
+    ports:
+      - 3002:3002
+    networks:
+      - proxynet
