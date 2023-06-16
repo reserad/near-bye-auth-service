@@ -9,6 +9,8 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { SmsModule } from '../sms/sms.module';
 import { LoggerModule } from 'nestjs-pino';
+import { PrismaModule } from '../prisma/prisma.module';
+import { BackendUserService } from '../backend/backend-user.service';
 
 @Module({
   imports: [
@@ -17,15 +19,18 @@ import { LoggerModule } from 'nestjs-pino';
     PassportModule,
     JwtModule.register({
       global: true,
-      signOptions: {
-        expiresIn: '60d',
-        issuer: 'NearBye',
-      },
     }),
     SmsModule,
     LoggerModule,
+    PrismaModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtService, UserService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtService,
+    UserService,
+    JwtStrategy,
+    BackendUserService,
+  ],
 })
 export class AuthModule {}

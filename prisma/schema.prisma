@@ -1,0 +1,39 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model post {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String  @db.VarChar
+  body       String  @db.VarChar
+  created_at String  @db.VarChar
+  user_id    String  @db.Uuid
+  longitude  Decimal @db.Decimal
+  latitude   Decimal @db.Decimal
+  user       user    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "post_fk")
+}
+
+model profile {
+  user_id       String  @id(map: "profile_pk") @db.Uuid
+  profile_image String? @db.VarChar
+  bio           String? @db.VarChar
+  name          String  @db.VarChar
+  user          user    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "profile_fk")
+}
+
+model user {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phone_number   String   @unique(map: "user_phone_un") @db.VarChar
+  base_lattitude Decimal? @db.Decimal
+  base_longitude Decimal? @db.Decimal
+  created_at     String   @db.VarChar
+  post           post[]
+  profile        profile?
+}
+

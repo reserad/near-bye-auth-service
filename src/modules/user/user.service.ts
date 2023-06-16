@@ -16,12 +16,6 @@ export class UserService {
     users: `${this.baseUrl}/users`,
   };
 
-  async fetch(phoneNumber: string) {
-    return await this.apiService.get<User>(
-      `${this.endPoints.users}/${phoneNumber}`,
-    );
-  }
-
   async create(userDto: UserDto) {
     return await this.apiService.post<User>(`${this.endPoints.users}`, {
       data: userDto,

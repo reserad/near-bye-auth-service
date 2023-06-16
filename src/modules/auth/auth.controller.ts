@@ -9,7 +9,7 @@ export class AuthController {
 
   @Post('/send')
   async sendOtp(@Body() otpRequestDto: OtpRequestDto) {
-    await this.authService.sendOtp(otpRequestDto);
+    return await this.authService.sendOtp(otpRequestDto);
   }
 
   @Post('/verify')

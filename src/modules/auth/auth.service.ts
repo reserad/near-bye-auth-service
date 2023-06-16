@@ -7,31 +7,28 @@ import { SmsService } from '../sms/sms.service';
 import { OtpVerificationStatus } from '../sms/types/otp-verification-status.enum';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { UserDto } from '../user/types/user-dto.type';
+import { BackendUserService } from '../backend/backend-user.service';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectPinoLogger(AuthService.name)
+    private readonly logger: PinoLogger,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
     private readonly smsService: SmsService,
-    @InjectPinoLogger(AuthService.name)
-    private readonly logger: PinoLogger,
+    private readonly backendUserService: BackendUserService,
   ) {}
 
   async sendOtp(userDto: UserDto) {
     const { phoneNumber } = userDto;
-    try {
-      await this.userService.fetch(phoneNumber);
-    } catch (e) {
-      await this.userService.create(userDto);
-    } finally {
-      return await this.smsService.sendOtp(phoneNumber);
-    }
+    await this.userService.create(userDto);
+    await this.smsService.sendOtp(phoneNumber);
   }
 
   async verifyOtp(phoneNumber: string, code: string) {
-    const user = await this.userService.fetch(phoneNumber);
+    const user = await this.backendUserService.fetch(phoneNumber);
     try {
       const { status } = await this.smsService.verifyOtp(phoneNumber, code);
       if (status !== OtpVerificationStatus.APPROVED) {
@@ -58,6 +55,8 @@ export class AuthService {
         },
         {
           secret: this.configService.get<string>('JWT_SECRET'),
+          expiresIn: '60d',
+          issuer: 'NearBye',
         },
       ),
     };

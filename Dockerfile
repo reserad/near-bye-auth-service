@@ -5,6 +5,8 @@ WORKDIR /usr/src/app
 ADD package.json yarn.lock ./
 RUN yarn
 COPY . .
+RUN yarn prisma db pull
+RUN yarn prisma generate
 RUN yarn build
 
 CMD ["node", "dist/src/main"]

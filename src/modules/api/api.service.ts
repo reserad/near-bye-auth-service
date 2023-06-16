@@ -1,17 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AxiosRequestConfig } from 'axios';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class ApiService {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly httpService: HttpService,
-  ) {}
-  private baseUrl = this.configService.get<string>('BASE_URL');
-
+  constructor(private readonly httpService: HttpService) {}
   async get<T>(url: string, options?: AxiosRequestConfig) {
     const config: AxiosRequestConfig = {
       ...options,
