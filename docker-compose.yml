@@ -11,6 +11,8 @@ services:
       context: .
     env_file:
       - .env
+      - rsa-keys-dev/private.test.pem.env
+      - rsa-keys-dev/public.test.pem.env
     volumes:
       - .:/usr/src/app
     command: npm run start:dev

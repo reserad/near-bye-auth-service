@@ -12,8 +12,9 @@ export class SmsService {
   }
 
   async sendOtp(phoneNumber: string) {
-    const serviceSid = this.configService.get('TWILIO_VERIFICATION_SID');
-
+    const serviceSid = this.configService.get<string>(
+      'TWILIO_VERIFICATION_SID',
+    );
     return await this.twilioClient.verify.v2
       .services(serviceSid)
       .verifications.create({
@@ -24,7 +25,9 @@ export class SmsService {
   }
 
   async verifyOtp(phoneNumber: string, code: string) {
-    const serviceSid = this.configService.get('TWILIO_VERIFICATION_SID');
+    const serviceSid = this.configService.get<string>(
+      'TWILIO_VERIFICATION_SID',
+    );
     return await this.twilioClient.verify.v2
       .services(serviceSid)
       .verificationChecks.create({ to: `+1${phoneNumber}`, code });

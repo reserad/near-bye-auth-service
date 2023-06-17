@@ -23,8 +23,14 @@ export class AuthService {
 
   async sendOtp(userDto: UserDto) {
     const { phoneNumber } = userDto;
-    await this.userService.create(userDto);
-    await this.smsService.sendOtp(phoneNumber);
+    try {
+      await this.userService.create(userDto);
+      await this.smsService.sendOtp(phoneNumber);
+    } catch (e) {
+      const message = 'Failed to send OTP';
+      this.logger.error(message, e);
+      throw e;
+    }
   }
 
   async verifyOtp(phoneNumber: string, code: string) {
@@ -36,6 +42,7 @@ export class AuthService {
       }
       return await this.authenticate(user);
     } catch (e) {
+      console.log(e);
       const message = 'Invalid code';
       this.logger.error(message, e);
       throw new HttpException(
@@ -54,7 +61,8 @@ export class AuthService {
           phoneNumber: phone_number,
         },
         {
-          secret: this.configService.get<string>('JWT_SECRET'),
+          secret: this.configService.get<string>('JWT_PRIVATE_KEY'),
+          algorithm: 'RS256',
           expiresIn: '60d',
           issuer: 'NearBye',
         },

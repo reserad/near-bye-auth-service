@@ -17,9 +17,7 @@ import { BackendUserService } from '../backend/backend-user.service';
     ConfigModule,
     ApiModule,
     PassportModule,
-    JwtModule.register({
-      global: true,
-    }),
+    JwtModule,
     SmsModule,
     LoggerModule,
     PrismaModule,
