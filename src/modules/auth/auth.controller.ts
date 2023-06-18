@@ -9,7 +9,8 @@ export class AuthController {
 
   @Post('/send')
   async sendOtp(@Body() otpRequestDto: OtpRequestDto) {
-    return await this.authService.sendOtp(otpRequestDto);
+    const { phoneNumber } = otpRequestDto;
+    return await this.authService.sendOtp(phoneNumber);
   }
 
   @Post('/verify')

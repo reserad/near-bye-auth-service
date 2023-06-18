@@ -3,7 +3,6 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { UserService } from 'src/modules/user/user.service';
 import { ApiModule } from 'src/modules/api/api.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
@@ -23,12 +22,6 @@ import { BackendUserService } from '../backend/backend-user.service';
     PrismaModule,
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtService,
-    UserService,
-    JwtStrategy,
-    BackendUserService,
-  ],
+  providers: [AuthService, JwtService, JwtStrategy, BackendUserService],
 })
 export class AuthModule {}
