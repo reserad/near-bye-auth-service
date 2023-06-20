@@ -30,7 +30,7 @@ model profile {
 model user {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   phone_number   String   @unique(map: "user_phone_un") @db.VarChar
-  base_lattitude Decimal? @db.Decimal
+  base_latitude Decimal? @db.Decimal
   base_longitude Decimal? @db.Decimal
   created_at     String   @db.VarChar
   post           post[]
