@@ -4,8 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { SmsService } from '../sms/sms.service';
 import { OtpVerificationStatus } from '../sms/types/otp-verification-status.enum';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { BackendUserService } from '../backend/backend-user.service';
+import { BackendService } from '../backend/backend.service';
 import { user } from '@prisma/client';
+import * as argon from 'argon2';
+import { JwtPayload } from './types/jwt-payload-type';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +17,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly smsService: SmsService,
-    private readonly backendUserService: BackendUserService,
+    private readonly backendServie: BackendService,
   ) {}
 
   async sendOtp(phoneNumber: string) {
@@ -29,15 +31,14 @@ export class AuthService {
   }
 
   async verifyOtp(phoneNumber: string, code: string) {
-    const user = await this.backendUserService.fetch(phoneNumber);
+    const user = await this.backendServie.fetchUser(phoneNumber);
     try {
-      const { status } = await this.smsService.verifyOtp(phoneNumber, code);
-      if (status !== OtpVerificationStatus.APPROVED) {
-        throw new Error('Status not approved');
-      }
-      return await this.authenticate(user);
+      // const { status } = await this.smsService.verifyOtp(phoneNumber, code);
+      // if (status !== OtpVerificationStatus.APPROVED) {
+      //   throw new Error('Status not approved');
+      // }
+      return await this.signIn(user);
     } catch (e) {
-      console.log(e);
       const message = 'Invalid code';
       this.logger.error(message, e);
       throw new HttpException(
@@ -47,23 +48,134 @@ export class AuthService {
     }
   }
 
-  async authenticate(user: user) {
-    const { id, phone_number } = user;
+  async getAccessToken(payload: JwtPayload) {
+    const issuer = this.configService.get<string>('JWT_ISSUER');
+    const { userId, phoneNumber } = payload;
+    console.log(
+      'hiya: ',
+      `${this.configService.get<number>('JWT_EXPIRATION_IN_DAYS')}d`,
+    );
+    return await this.jwtService.signAsync(
+      {
+        userId,
+        phoneNumber,
+      },
+      {
+        secret: this.configService.get<string>('JWT_PRIVATE_KEY'),
+        algorithm: 'RS256',
+        expiresIn: `${this.configService.get<number>(
+          'JWT_EXPIRATION_IN_DAYS',
+        )}d`,
+        issuer,
+      },
+    );
+  }
+
+  async getRefreshToken(payload: JwtPayload) {
+    const issuer = this.configService.get<string>('JWT_ISSUER');
+    const { userId, phoneNumber } = payload;
+    return await this.jwtService.signAsync(
+      {
+        userId,
+        phoneNumber,
+      },
+      {
+        secret: this.configService.get<string>('JWT_REFRESH_PRIVATE_KEY'),
+        algorithm: 'RS256',
+        expiresIn: `${this.configService.get<number>(
+          'JWT_REFRESH_EXPIRATION_IN_DAYS',
+        )}d`,
+        issuer,
+      },
+    );
+  }
+
+  async getTokens(payload: JwtPayload) {
+    const accessToken = await this.getAccessToken(payload);
+    console.log('1.5');
+    const refreshToken = await this.getRefreshToken(payload);
+
     return {
-      token: await this.jwtService.signAsync(
-        {
-          id,
-          phoneNumber: phone_number,
-        },
-        {
-          secret: this.configService.get<string>('JWT_PRIVATE_KEY'),
-          algorithm: 'RS256',
-          expiresIn: '60d',
-          issuer: 'NearBye',
-        },
-      ),
+      accessToken,
+      refreshToken,
     };
   }
 
-  //async refresh() {}
+  async updateRefreshToken(tokenId: string, refreshToken: string) {
+    const hashedRefreshToken = await argon.hash(refreshToken);
+    await this.backendServie.updateRefreshToken(tokenId, hashedRefreshToken);
+  }
+
+  async generateTokens(payload: JwtPayload, tokenId: string) {
+    const { accessToken, refreshToken } = await this.getTokens(payload);
+
+    const hashedRefreshToken = await argon.hash(refreshToken);
+    const token = await this.backendServie.updateRefreshToken(
+      tokenId,
+      hashedRefreshToken,
+    );
+    return {
+      accessToken,
+      refreshToken,
+      tokenId: token.id,
+      user: {
+        id: payload.userId,
+        phoneNumber: payload.phoneNumber,
+      },
+    };
+  }
+
+  async getUserIfRefreshTokenMatches(
+    refreshToken: string,
+    tokenId: string,
+    payload: JwtPayload,
+  ) {
+    const foundToken = await this.backendServie.getToken(tokenId);
+
+    const isMatch = await argon.verify(foundToken.token ?? '', refreshToken);
+
+    if (foundToken == null) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (isMatch) {
+      return await this.generateTokens(payload, tokenId);
+    }
+
+    throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+  }
+
+  async signIn(user: user) {
+    console.log('here 1');
+    const payload: JwtPayload = {
+      phoneNumber: user.phone_number,
+      userId: user.id,
+    };
+    const { accessToken, refreshToken } = await this.getTokens(payload);
+    console.log('here 2');
+    try {
+      const hashedToken = await argon.hash(refreshToken);
+      console.log('here 3');
+      const token = await this.backendServie.addRefreshToken(
+        user.id,
+        hashedToken,
+      );
+
+      return {
+        accessToken,
+        refreshToken,
+        tokenId: token.id,
+        user: {
+          id: user.id,
+          phoneNumber: user.phone_number,
+        },
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async signOut(tokenId: string) {
+    await this.backendServie.removeRefreshToken(tokenId);
+  }
 }

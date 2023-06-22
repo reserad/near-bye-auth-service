@@ -30,10 +30,29 @@ model profile {
 model user {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   phone_number   String   @unique(map: "user_phone_un") @db.VarChar
-  base_latitude Decimal? @db.Decimal
   base_longitude Decimal? @db.Decimal
   created_at     String   @db.VarChar
+  base_latitude  Decimal? @db.Decimal
   post           post[]
   profile        profile?
+  token          token[]
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+model token {
+  id         String @id(map: "token_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String @db.Uuid
+  token      String @db.VarChar
+  expires_at String @db.VarChar
+  created_at String @db.VarChar
+  updated_at String @db.VarChar
+  user       user   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "token_fk")
+}

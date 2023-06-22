@@ -1,7 +1,7 @@
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JwtPayloadType } from './types/jwt-payload-type';
-import { JwtStrategyPayload } from './types/jwt-strategy-payload-type';
+import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt';
+import { JwtPayload } from '../types/jwt-payload-type';
+import { JwtStrategyPayload } from '../types/jwt-strategy-payload-type';
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 
@@ -13,14 +13,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_PUBLIC_KEY'),
       algorithms: ['RS256'],
-    });
+    } as StrategyOptions);
   }
 
-  async validate(payload: JwtPayloadType): Promise<JwtStrategyPayload> {
-    const { id, phoneNumber } = payload;
-    return {
-      id,
-      phoneNumber,
-    };
+  async validate(payload: JwtPayload): Promise<JwtStrategyPayload> {
+    return payload;
   }
 }
