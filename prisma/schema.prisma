@@ -8,34 +8,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model post {
-  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title      String  @db.VarChar
-  body       String  @db.VarChar
-  created_at String  @db.VarChar
-  user_id    String  @db.Uuid
-  longitude  Decimal @db.Decimal
-  latitude   Decimal @db.Decimal
-  user       user    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "post_fk")
+model Post {
+  id        String  @id(map: "post_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String  @db.VarChar
+  body      String  @db.VarChar
+  createdAt String  @db.VarChar
+  userId    String  @db.Uuid
+  longitude Decimal @db.Decimal
+  latitude  Decimal @db.Decimal
+  User      User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "post_fk")
 }
 
-model profile {
-  user_id       String  @id(map: "profile_pk") @db.Uuid
-  profile_image String? @db.VarChar
-  bio           String? @db.VarChar
-  name          String  @db.VarChar
-  user          user    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "profile_fk")
+model Profile {
+  userId       String  @id(map: "profile_pk") @db.Uuid
+  profileImage String? @db.VarChar
+  bio          String? @db.VarChar
+  name         String  @db.VarChar
+  User         User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "profile_fk")
 }
 
-model user {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  phone_number   String   @unique(map: "user_phone_un") @db.VarChar
-  base_longitude Decimal? @db.Decimal
-  created_at     String   @db.VarChar
-  base_latitude  Decimal? @db.Decimal
-  post           post[]
-  profile        profile?
-  token          token[]
+model Token {
+  id        String @id(map: "token_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String @db.Uuid
+  token     String @db.VarChar
+  expiresAt String @db.VarChar
+  createdAt String @db.VarChar
+  updatedAt String @db.VarChar
+  User      User   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "token_fk")
+}
+
+model User {
+  id            String   @id(map: "user_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phoneNumber   String   @unique(map: "user_phone_un") @db.VarChar
+  baseLongitude Decimal? @db.Decimal
+  createdAt     String   @db.VarChar
+  baseLatitude  Decimal? @db.Decimal
+  Post          Post[]
+  Profile       Profile?
+  Token         Token[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -45,14 +55,4 @@ model spatial_ref_sys {
   auth_srid Int?
   srtext    String? @db.VarChar(2048)
   proj4text String? @db.VarChar(2048)
-}
-
-model token {
-  id         String @id(map: "token_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id    String @db.Uuid
-  token      String @db.VarChar
-  expires_at String @db.VarChar
-  created_at String @db.VarChar
-  updated_at String @db.VarChar
-  user       user   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "token_fk")
 }

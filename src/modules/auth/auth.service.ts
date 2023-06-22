@@ -2,10 +2,9 @@ import { HttpException, Injectable, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { SmsService } from '../sms/sms.service';
-import { OtpVerificationStatus } from '../sms/types/otp-verification-status.enum';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { BackendService } from '../backend/backend.service';
-import { user } from '@prisma/client';
+import { User } from '@prisma/client';
 import * as argon from 'argon2';
 import { JwtPayload } from './types/jwt-payload-type';
 
@@ -145,10 +144,10 @@ export class AuthService {
     throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
   }
 
-  async signIn(user: user) {
+  async signIn(user: User) {
     console.log('here 1');
     const payload: JwtPayload = {
-      phoneNumber: user.phone_number,
+      phoneNumber: user.phoneNumber,
       userId: user.id,
     };
     const { accessToken, refreshToken } = await this.getTokens(payload);
@@ -167,7 +166,7 @@ export class AuthService {
         tokenId: token.id,
         user: {
           id: user.id,
-          phoneNumber: user.phone_number,
+          phoneNumber: user.phoneNumber,
         },
       };
     } catch (error) {

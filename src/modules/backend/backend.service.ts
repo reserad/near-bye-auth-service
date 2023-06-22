@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PinoLogger } from 'nestjs-pino';
-import { user } from '@prisma/client';
+import { User } from '@prisma/client';
 import { formatISO, addDays } from 'date-fns';
 import { ConfigService } from '@nestjs/config';
 
@@ -12,10 +12,10 @@ export class BackendService {
     private readonly logger: PinoLogger,
     private readonly configService: ConfigService,
   ) {}
-  async fetchUser(phoneNumber: string): Promise<user> {
+  async fetchUser(phoneNumber: string): Promise<User> {
     try {
       return await this.prismaService.user.findUniqueOrThrow({
-        where: { phone_number: phoneNumber },
+        where: { phoneNumber: phoneNumber },
       });
     } catch (e) {
       const message = 'Failed to fetch user';
@@ -34,11 +34,11 @@ export class BackendService {
     try {
       return await this.prismaService.token.create({
         data: {
-          user_id: userId,
+          userId,
           token: refreshToken,
-          created_at: formatISO(createdAt),
-          expires_at: formatISO(expiresAt),
-          updated_at: formatISO(createdAt),
+          createdAt: formatISO(createdAt),
+          expiresAt: formatISO(expiresAt),
+          updatedAt: formatISO(createdAt),
         },
       });
     } catch (e) {
@@ -60,8 +60,8 @@ export class BackendService {
         where: { id: tokenId },
         data: {
           token: refreshToken,
-          expires_at: formatISO(expiresAt),
-          updated_at: formatISO(createdAt),
+          expiresAt: formatISO(expiresAt),
+          updatedAt: formatISO(createdAt),
         },
       });
     } catch (e) {
