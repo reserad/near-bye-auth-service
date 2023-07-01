@@ -7,6 +7,7 @@ import { BackendService } from '../backend/backend.service';
 import { User } from '@prisma/client';
 import * as argon from 'argon2';
 import { JwtPayload } from './types/jwt-payload-type';
+import { OtpVerificationStatus } from '../sms/types/otp-verification-status.enum';
 
 @Injectable()
 export class AuthService {
@@ -32,17 +33,17 @@ export class AuthService {
   async verifyOtp(phoneNumber: string, code: string) {
     const user = await this.backendServie.fetchUser(phoneNumber);
     try {
-      // const { status } = await this.smsService.verifyOtp(phoneNumber, code);
-      // if (status !== OtpVerificationStatus.APPROVED) {
-      //   throw new Error('Status not approved');
-      // }
+      const { status } = await this.smsService.verifyOtp(phoneNumber, code);
+      if (status !== OtpVerificationStatus.APPROVED) {
+        throw new Error('Status not approved');
+      }
       return await this.signIn(user);
     } catch (e) {
       const message = 'Invalid code';
       this.logger.error(message, e);
       throw new HttpException(
         { statusCode: HttpStatus.NOT_FOUND, message },
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.NOT_FOUND,
       );
     }
   }
@@ -145,7 +146,6 @@ export class AuthService {
   }
 
   async signIn(user: User) {
-    console.log('here 1');
     const payload: JwtPayload = {
       phoneNumber: user.phoneNumber,
       userId: user.id,
